@@ -1,6 +1,6 @@
 class AcGameMenu {
     constructor(root) {
-        this.root = root;
+        this.root = root; // this 为当前这个对象, root为当前对象下所有元素的根
         this.$menu = $(`
 <div class="ac-game-menu">
     <div class="ac-game-menu-field">
@@ -29,14 +29,14 @@ class AcGameMenu {
     }
 
     start() {
-        this.add_listening_events();
+        this.add_listening_events(); // 监听事件
     }
 
     add_listening_events() {
         let outer = this;
-        this.$single_mode.click(function(){
-            outer.hide();
-            outer.root.playground.show();
+        this.$single_mode.click(function(){ // 鼠标点击事件
+            outer.hide(); // 隐藏menu
+            outer.root.playground.show(); // 显示playground
         });
         this.$multi_mode.click(function(){
             console.log("click multi mode");
@@ -59,8 +59,8 @@ class AcGamePlayground {
         this.root = root;
         this.$playground = $(`<div>游戏界面</div>`);
         
-        this.hide();
-        this.root.$ac_game.append(this.$playground);
+        this.hide(); // 游戏界面创建出来时先关闭
+        this.root.$ac_game.append(this.$playground); // append 在$ac_game末尾(仍然在内部)插入内容(playground)
 
         this.start();
     }
@@ -82,9 +82,9 @@ class AcGamePlayground {
 class AcGame {
     constructor(id) {
         this.id = id;
-        this.$ac_game = $('#' + id);
-        this.menu = new AcGameMenu(this);
-        this.playground = new AcGamePlayground(this);
+        this.$ac_game = $('#' + id); // 得到id
+        this.menu = new AcGameMenu(this); // 创建menu实例
+        this.playground = new AcGamePlayground(this); // 创建playground实例
 
         this.start();
     }
