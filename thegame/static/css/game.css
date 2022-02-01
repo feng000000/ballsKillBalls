@@ -31,3 +31,9 @@
     transform: scale(1.2); /*鼠标悬浮在这个元素上时, 元素大小会乘以 1.2*/
     transition: 100ms; /*用100ms完成变化 (更加平滑)*/
 }
+
+.ac-game-playground {
+    width: 100%;
+    height: 100%;
+    user-select: none;
+}
