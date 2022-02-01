@@ -1,6 +1,6 @@
 class AcGameMenu {
     constructor(root) {
-        this.root = root;
+        this.root = root; // this 为当前这个对象, root为当前对象下所有元素的根
         this.$menu = $(`
 <div class="ac-game-menu">
     <div class="ac-game-menu-field">
@@ -29,14 +29,14 @@ class AcGameMenu {
     }
 
     start() {
-        this.add_listening_events();
+        this.add_listening_events(); // 监听事件
     }
 
     add_listening_events() {
         let outer = this;
-        this.$single_mode.click(function(){
-            outer.hide();
-            outer.root.playground.show();
+        this.$single_mode.click(function(){ // 鼠标点击事件
+            outer.hide(); // 隐藏menu
+            outer.root.playground.show(); // 显示playground
         });
         this.$multi_mode.click(function(){
             console.log("click multi mode");
@@ -259,6 +259,7 @@ class AcGamePlayground {
         this.root = root;
         this.$playground = $(`<div class="ac-game-playground"></div>`);
         
+<<<<<<< HEAD
         // this.hide();
         this.root.$ac_game.append(this.$playground);
         this.width = this.$playground.width();
@@ -266,6 +267,10 @@ class AcGamePlayground {
         this.game_map = new GameMap(this);
         this.players = [];
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true));
+=======
+        this.hide(); // 游戏界面创建出来时先关闭
+        this.root.$ac_game.append(this.$playground); // append 在$ac_game末尾(仍然在内部)插入内容(playground)
+>>>>>>> 45988b9a9fccb9ee52fd1ba393460ab1728250d1
 
         this.start();
     }
@@ -287,9 +292,15 @@ class AcGamePlayground {
 export class AcGame {
     constructor(id) {
         this.id = id;
+<<<<<<< HEAD
         this.$ac_game = $('#' + id);
         // this.menu = new AcGameMenu(this);
         this.playground = new AcGamePlayground(this);
+=======
+        this.$ac_game = $('#' + id); // 得到id
+        this.menu = new AcGameMenu(this); // 创建menu实例
+        this.playground = new AcGamePlayground(this); // 创建playground实例
+>>>>>>> 45988b9a9fccb9ee52fd1ba393460ab1728250d1
 
         this.start();
     }
