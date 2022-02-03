@@ -22,6 +22,8 @@ class Player extends AcGameObject
         this.is_me = is_me;
         this.eps = 0.1; //因为涉及浮点运算, 所以规定一个极小值
 
+        this.cur_skill = null; // 当前选择的技能是什么
+
     }
 
     start()
@@ -29,6 +31,12 @@ class Player extends AcGameObject
         if(this.is_me)
         {
             this.add_listening_events();
+        }
+        else
+        {
+            let tx = Math.random() * this.playground.width;
+            let ty = Math.random() * this.playground.height;
+            this.move_to(tx, ty);
         }
     }
 
@@ -51,8 +59,39 @@ class Player extends AcGameObject
                     // 这里如果使用this会调用到这个函数本身, 如果想要调用到这个类, 要在外面先存一下(outer)
                     outer.move_to(e.clientX, e.clientY);
                 }
+                else if(e.which === 1)
+                {
+                    if(outer.cur_skill === "fireball")
+                    {
+                        outer.shoot_fireball(e.clientX, e.clientY);
+                    }
+                }
             }
         );
+
+        $(window).keydown( // 得到键盘按键
+            function(e) {
+                if(e.which === 81) // q 键
+                {
+                    outer.cur_skill = "fireball";
+                    return false;
+                }
+            }
+        );
+    }
+
+    shoot_fireball(tx, ty)
+    {
+        let x = this.x, y = this.y;
+        let radius = this.playground.height * 0.01;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let vx = Math.cos(angle), vy = Math.sin(angle);
+        let color = "orange";
+        let speed = this.playground.height * 0.5;
+        let move_length = this.playground.height * 1;
+        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length);
+
+        this.cur_skill = null;
     }
 
     get_dist(x1, y1, x2, y2)
@@ -77,6 +116,12 @@ class Player extends AcGameObject
         {
             this.move_length = 0;
             this.vx = this.vy = 0;
+            if(!this.is_me)
+            {
+                let tx = Math.random() * this.playground.width;
+                let ty = Math.random() * this.playground.height;
+                this.move_to(tx, ty);
+            }
         }
         else
         {

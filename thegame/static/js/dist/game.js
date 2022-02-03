@@ -78,20 +78,20 @@ class AcGameObject
 
     }
 
-    on_destory() // 在被销毁前执行一次
+    on_destroy() // 在被销毁前执行一次
     {
 
     }
 
-    destory() // 删掉该物体
+    destroy() // 删掉该物体
     {
-        this.on_destory();
+        this.on_destroy();
 
-        for(let i = 0; oi < AC_GAME_OBJECT.length; i ++) 
+        for(let i = 0; i < AC_GAME_OBJECTS.length; i ++)
         {
-            if(AC_GAME_OBJECT[i] === this)
+            if(AC_GAME_OBJECTS[i] === this)
             {
-                AC_GAME_OBJECT.splice(i, 1);
+                AC_GAME_OBJECTS.splice(i, 1);
                 break;
             }
         }
@@ -179,6 +179,8 @@ class Player extends AcGameObject
         this.is_me = is_me;
         this.eps = 0.1; //因为涉及浮点运算, 所以规定一个极小值
 
+        this.cur_skill = null; // 当前选择的技能是什么
+
     }
 
     start()
@@ -186,6 +188,12 @@ class Player extends AcGameObject
         if(this.is_me)
         {
             this.add_listening_events();
+        }
+        else
+        {
+            let tx = Math.random() * this.playground.width;
+            let ty = Math.random() * this.playground.height;
+            this.move_to(tx, ty);
         }
     }
 
@@ -208,8 +216,39 @@ class Player extends AcGameObject
                     // 这里如果使用this会调用到这个函数本身, 如果想要调用到这个类, 要在外面先存一下(outer)
                     outer.move_to(e.clientX, e.clientY);
                 }
+                else if(e.which === 1)
+                {
+                    if(outer.cur_skill === "fireball")
+                    {
+                        outer.shoot_fireball(e.clientX, e.clientY);
+                    }
+                }
             }
         );
+
+        $(window).keydown( // 得到键盘按键
+            function(e) {
+                if(e.which === 81) // q 键
+                {
+                    outer.cur_skill = "fireball";
+                    return false;
+                }
+            }
+        );
+    }
+
+    shoot_fireball(tx, ty)
+    {
+        let x = this.x, y = this.y;
+        let radius = this.playground.height * 0.01;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let vx = Math.cos(angle), vy = Math.sin(angle);
+        let color = "orange";
+        let speed = this.playground.height * 0.5;
+        let move_length = this.playground.height * 1;
+        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length);
+
+        this.cur_skill = null;
     }
 
     get_dist(x1, y1, x2, y2)
@@ -234,6 +273,12 @@ class Player extends AcGameObject
         {
             this.move_length = 0;
             this.vx = this.vy = 0;
+            if(!this.is_me)
+            {
+                let tx = Math.random() * this.playground.width;
+                let ty = Math.random() * this.playground.height;
+                this.move_to(tx, ty);
+            }
         }
         else
         {
@@ -258,9 +303,11 @@ class FireBall extends AcGameObject
 {
     constructor(playground, player, x, y, radius, vx, vy, color, speed, move_length)
     {
+        super();
+
         this.playground = playground;
         this.player = player;
-        this.ctx = this.palyground.game_map.ctx;
+        this.ctx = this.playground.game_map.ctx;
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -279,13 +326,24 @@ class FireBall extends AcGameObject
 
     update()
     {
+        if(this.move_length < this.eps)
+        {
+            this.destroy();
+            return false;
+        }
+
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+
         this.render();
     }
-    
+
     render()
     {
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius. 0, Math.PI * 2. false);
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
@@ -304,6 +362,12 @@ class AcGamePlayground {
         this.game_map = new GameMap(this);
         this.players = [];
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true));
+
+        for(let i = 0; i < 5; i ++)
+        {
+            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "blue", this.height * 0.15, false));
+        }
+
 
         this.start();
     }
