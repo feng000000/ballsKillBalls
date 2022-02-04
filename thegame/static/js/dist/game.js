@@ -172,12 +172,16 @@ class Player extends AcGameObject
         this.y = y;
         this.vx = 0; // vx指x方向上的每帧移动的距离, vy指y方向上的
         this.vy = 0;
+        this.damage_x = 0;
+        this.damage_y = 0;
+        this.damage_speed = 0;
         this.move_length = 0; // 要移动的距离
         this.radius = radius;
         this.color = color;
         this.speed = speed;
         this.is_me = is_me;
         this.eps = 0.1; //因为涉及浮点运算, 所以规定一个极小值
+        this.friction = 0.9;
 
         this.cur_skill = null; // 当前选择的技能是什么
 
@@ -233,6 +237,11 @@ class Player extends AcGameObject
                     outer.cur_skill = "fireball";
                     return false;
                 }
+                else if(e.which === 83)
+                {
+                    outer.move_length = 0;
+                    return false;
+                }
             }
         );
     }
@@ -246,7 +255,7 @@ class Player extends AcGameObject
         let color = "orange";
         let speed = this.playground.height * 0.5;
         let move_length = this.playground.height * 1;
-        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length);
+        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length, this.playground.height * 0.01);
 
         this.cur_skill = null;
     }
@@ -267,25 +276,50 @@ class Player extends AcGameObject
         this.vy = Math.sin(angle);
     }
 
+    is_attacked(angle, damage)
+    {
+        this.radius -= damage;
+        if(this.radius < 10)
+        {
+            this.destroy();
+            return false;
+        }
+        this.damage_x = Math.cos(angle);
+        this.damage_y = Math.sin(angle);
+        this.damage_speed = damage * 100;
+
+    }
+
     update()
     {
-        if(this.move_length < this.eps) // 要移动的距离走完就停下
+        if(this.damage_speed > this.eps)
         {
-            this.move_length = 0;
             this.vx = this.vy = 0;
-            if(!this.is_me)
-            {
-                let tx = Math.random() * this.playground.width;
-                let ty = Math.random() * this.playground.height;
-                this.move_to(tx, ty);
-            }
+            this.move_length = 0;
+            this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
+            this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
+            this.damage_speed *= this.friction;
         }
         else
         {
-            let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000); // 当前这一帧移动了的距离, min函数防止最后一点多走了
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_length -= moved; // 更新还要移动的距离
+            if(this.move_length < this.eps) // 要移动的距离走完就停下
+            {
+                this.move_length = 0;
+                this.vx = this.vy = 0;
+                if(!this.is_me)
+                {
+                    let tx = Math.random() * this.playground.width;
+                    let ty = Math.random() * this.playground.height;
+                    this.move_to(tx, ty);
+                }
+            }
+            else
+            {
+                let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000); // 当前这一帧移动了的距离, min函数防止最后一点多走了
+                this.x += this.vx * moved;
+                this.y += this.vy * moved;
+                this.move_length -= moved; // 更新还要移动的距离
+            }
         }
         this.render();
     }
@@ -301,7 +335,7 @@ class Player extends AcGameObject
 }
 class FireBall extends AcGameObject
 {
-    constructor(playground, player, x, y, radius, vx, vy, color, speed, move_length)
+    constructor(playground, player, x, y, radius, vx, vy, color, speed, move_length, damage)
     {
         super();
 
@@ -316,6 +350,7 @@ class FireBall extends AcGameObject
         this.color = color;
         this.speed = speed;
         this.move_length = move_length; // 射程
+        this.damage = damage;
         this.eps = 0.1;
     }
 
@@ -337,7 +372,37 @@ class FireBall extends AcGameObject
         this.y += this.vy * moved;
         this.move_length -= moved;
 
+        for(let i = 0; i < this.playground.players.length; i ++)
+        {
+            let player = this.playground.players[i];
+            if(this.player !== player && this.is_conllision(player))
+            {
+                this.attack(player);
+            }
+        }
+
         this.render();
+    }
+
+    get_dist(x1, y1, x2, y2)
+    {
+        let dx = x1 - x2, dy = y1 - y2;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    is_conllision(player)
+    {
+        let distance = this.get_dist(this.x, this.y, player.x, player.y);
+        if(distance < this.radius + player.radius)
+            return true;
+        return false;
+    }
+
+    attack(player)
+    {
+        let angle = Math.atan2(player.y - this.y, player.x - this.x);
+        player.is_attacked(angle, this.damage)
+        this.destroy();
     }
 
     render()
