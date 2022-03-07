@@ -1,6 +1,6 @@
 class Particle extends AcGameObject
 {
-    constructor(playground, x, y, radius, vx, vy, colorofPlayer, speed, move_length)
+    constructor(playground, x, y, radius, vx, vy, color, speed, move_length)
     {
         super();
         this.playground = playground;
@@ -10,7 +10,7 @@ class Particle extends AcGameObject
         this.radius = radius;
         this.vx = vx;
         this.vy = vy;
-        this.colorofParticle = colorofPlayer;
+        this.color = color;
         //console.log("传入粒子的颜色" + colorofPlayer);
         this.speed = speed;
         this.move_length = move_length;
@@ -43,7 +43,7 @@ class Particle extends AcGameObject
     {
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillstyle = this.colorofParticle;
+        this.ctx.fillstyle = this.color;
         this.ctx.fill();
 
     }

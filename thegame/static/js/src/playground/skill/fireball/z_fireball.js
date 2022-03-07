@@ -12,7 +12,7 @@ class FireBall extends AcGameObject
         this.vx = vx;
         this.vy = vy;
         this.radius = radius;
-        this.colorofFireball = color;
+        this.color = color;
         this.speed = speed;
         this.move_length = move_length; // 射程
         this.damage = damage;
@@ -74,7 +74,7 @@ class FireBall extends AcGameObject
     {
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.colorofFireball;
+        this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
 

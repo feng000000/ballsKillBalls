@@ -20,7 +20,7 @@ class Player extends AcGameObject
         this.damage_speed = 0;
         this.move_length = 0; // 要移动的距离
         this.radius = radius;
-        this.colorofPlayer = color;
+        this.color = color;
         this.speed = speed;
         this.is_me = is_me;
         this.eps = 0.1; //因为涉及浮点运算, 所以规定一个极小值
@@ -98,10 +98,10 @@ class Player extends AcGameObject
         let radius = this.playground.height * 0.01;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let colorofFireball = "white";
+        let color = "orange";
         let speed = this.playground.height * 0.5;
         let move_length = this.playground.height * 1;
-        new FireBall(this.playground, this, x, y, radius, vx, vy, colorofFireball, speed, move_length, this.playground.height * 0.01);
+        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length, this.playground.height * 0.01);
 
     }
 
@@ -129,11 +129,11 @@ class Player extends AcGameObject
             let radius = this.radius *  Math.random() * 0.2; // 半径随机
             let angle = Math.PI * 2 * Math.random(); // 角度随机
             let vx = Math.cos(angle), vy = Math.sin(angle);
-            let thecolor = this.colorofPlayer; // 颜色与球的颜色相同
+            let color = this.color; // 颜色与球的颜色相同
             //console.log("球的颜色" + thecolor);
             let speed = this.speed * 10;
             let move_length = this.radius * Math.random() * 5; // 移动距离随机
-            new Particle(this.playground, x, y, radius, vx, vy, this.colorofPlayer, speed, move_length);
+            new Particle(this.playground, x, y, radius, vx, vy, color, speed, move_length);
         }
 
         this.radius -= damage;
@@ -196,7 +196,7 @@ class Player extends AcGameObject
         // 画一个圆表示玩家
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.colorofPlayer;
+        this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
 
