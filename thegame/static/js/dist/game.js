@@ -172,7 +172,7 @@ class Particle extends AcGameObject
         this.speed = speed;
         this.move_length = move_length;
         this.friction = 0.9;
-        this.eps = 3;
+        this.eps = 1;
     }
 
     start()
