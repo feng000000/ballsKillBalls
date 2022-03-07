@@ -20,11 +20,12 @@ class Player extends AcGameObject
         this.damage_speed = 0;
         this.move_length = 0; // 要移动的距离
         this.radius = radius;
-        this.color = color;
+        this.colorofPlayer = color;
         this.speed = speed;
         this.is_me = is_me;
         this.eps = 0.1; //因为涉及浮点运算, 所以规定一个极小值
         this.friction = 0.9;
+        this.spent_time = 0; // 从开始到此刻经过的时间
 
         this.cur_skill = null; // 当前选择的技能是什么
 
@@ -69,6 +70,8 @@ class Player extends AcGameObject
                     {
                         outer.shoot_fireball(e.clientX, e.clientY);
                     }
+
+                    outer.cur_skill = null;
                 }
             }
         );
@@ -95,12 +98,11 @@ class Player extends AcGameObject
         let radius = this.playground.height * 0.01;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let color = "orange";
+        let colorofFireball = "white";
         let speed = this.playground.height * 0.5;
         let move_length = this.playground.height * 1;
-        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length, this.playground.height * 0.01);
+        new FireBall(this.playground, this, x, y, radius, vx, vy, colorofFireball, speed, move_length, this.playground.height * 0.01);
 
-        this.cur_skill = null;
     }
 
     get_dist(x1, y1, x2, y2)
@@ -121,6 +123,19 @@ class Player extends AcGameObject
 
     is_attacked(angle, damage)
     {
+        for(let i = 0; i < 20; i ++) // 每次循环生成一个粒子
+        {
+            let x = this.x, y = this.y;
+            let radius = this.radius *  Math.random() * 0.2; // 半径随机
+            let angle = Math.PI * 2 * Math.random(); // 角度随机
+            let vx = Math.cos(angle), vy = Math.sin(angle);
+            let thecolor = this.colorofPlayer; // 颜色与球的颜色相同
+            //console.log("球的颜色" + thecolor);
+            let speed = this.speed * 10;
+            let move_length = this.radius * Math.random() * 5; // 移动距离随机
+            new Particle(this.playground, x, y, radius, vx, vy, this.colorofPlayer, speed, move_length);
+        }
+
         this.radius -= damage;
         if(this.radius < 10)
         {
@@ -130,12 +145,21 @@ class Player extends AcGameObject
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
         this.damage_speed = damage * 100;
+        this.speed *= this.friction;
 
     }
 
     update()
     {
-        if(this.damage_speed > this.eps)
+        this.spent_time += this.timedelta / 1000;
+        let players = this.playground.players;
+        if(!this.is_me && this.spent_time > 5 && Math.random() < 1 / 360.0)
+        {
+            let player = this.playground.players[Math.floor(Math.random() * players.length)];
+            this.shoot_fireball(player.x, player.y);
+        }
+
+        if(this.damage_speed > 10)
         {
             this.vx = this.vy = 0;
             this.move_length = 0;
@@ -172,7 +196,22 @@ class Player extends AcGameObject
         // 画一个圆表示玩家
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.color;
+        this.ctx.fillStyle = this.colorofPlayer;
         this.ctx.fill();
     }
+
+    on_destroy()
+    {
+        
+        let players = this.playground.players;
+        for(let i = 0; i < players.length; i ++)
+        {
+            if(players[i] === this)
+            {
+                players.splice(i, 1);
+                break;
+            }
+        }
+    }
+
 }

@@ -12,7 +12,7 @@ class FireBall extends AcGameObject
         this.vx = vx;
         this.vy = vy;
         this.radius = radius;
-        this.color = color;
+        this.colorofFireball = color;
         this.speed = speed;
         this.move_length = move_length; // 射程
         this.damage = damage;
@@ -55,15 +55,15 @@ class FireBall extends AcGameObject
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    is_conllision(player)
+    is_conllision(player) // 判断火球是否与player这个玩家（保证不是自己）发生碰撞
     {
-        let distance = this.get_dist(this.x, this.y, player.x, player.y);
+        let distance = this.get_dist(this.x, this.y, player.x, player.y); // 距离player的距离
         if(distance < this.radius + player.radius)
             return true;
         return false;
     }
 
-    attack(player)
+    attack(player) // 和player发生碰撞
     {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         player.is_attacked(angle, this.damage)
@@ -74,7 +74,7 @@ class FireBall extends AcGameObject
     {
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.color;
+        this.ctx.fillStyle = this.colorofFireball;
         this.ctx.fill();
     }
 
