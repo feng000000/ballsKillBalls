@@ -109,7 +109,7 @@ class Settings
 
 
         this.$register = this.$settings.find(".ac-game-settings-register");
-        this.register_username = this.$register.find(".ac-game-settings-username input");
+        this.$register_username = this.$register.find(".ac-game-settings-username input");
         this.$register_password = this.$register.find(".ac-game-settings-password-first input");
         this.$register_password_confirm = this.$register.find(".ac-game-settings-password-second input");
         this.$register_submit = this.$register.find(".ac-game-settings-submit button");
@@ -155,6 +155,9 @@ class Settings
         this.$register_login.click(function() {
             outer.login();
         });
+        this.$register_submit.click(function() {
+            outer.register_on_remote();
+        });
     }
 
     login_on_remote()
@@ -183,12 +186,45 @@ class Settings
 
     logout_on_remote()
     {
+        if(this.platform === "ACAPP") return false;
+        
+        $.ajax({
+            url: "https://app1793.acapp.acwing.com.cn/settings/logout/",
+            type: "GET",
+            success: function(resp) {
+                console.log(resp);
+                if(resp.result === "success")
+                location.reload();
+            }
+        });
 
     }
 
     register_on_remote()
     {
+        let outer = this;
+        let username = this.$register_username.val();
+        let password = this.$register_password.val();
+        let password_confirm = this.$register_password_confirm.val();
+        this.$register_error_meesage.empty();
 
+        $.ajax({
+            url: "https://app1793.acapp.acwing.com.cn/settings/register/",
+            type: "GET",
+            data: {
+                username: username,
+                password: password,
+                password_confirm: password_confirm,
+            },
+            success: function(resp) {
+                console.log(resp);
+                if(resp.result === "success") {
+                    location.reload();
+                } else {
+                    outer.$register_error_meesage.html(resp.result);
+                }
+            }
+        })
     }
 
     login()
@@ -224,7 +260,7 @@ class Settings
                     outer.login();
                 }
             }
-        })
+        });
     }
 
     hide()
