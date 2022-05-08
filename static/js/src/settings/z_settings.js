@@ -317,7 +317,6 @@ class Settings
                     outer.username = resp.username;
                     outer.photo = resp.photo;
                     outer.root.menu.show();
-                    console.log("show menu");
                 }else {
                     outer.login();
                 }
