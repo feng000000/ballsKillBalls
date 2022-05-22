@@ -59,7 +59,7 @@ class AcGameObject
 }
 
 let last_timestamp;
-let AC_GAME_ANIMATION = function(timestamp) 
+let AC_GAME_ANIMATION = function(timestamp) // 实现动画
 {
     for(let i = 0; i < AC_GAME_OBJECTS.length; i ++)
     {
@@ -72,12 +72,12 @@ let AC_GAME_ANIMATION = function(timestamp)
         else
         {
             obj.timedelta = timestamp - last_timestamp;
-            obj.update();
+            obj.update(); // 更新画面
         }
     }
     last_timestamp = timestamp;
 
-    requestAnimationFrame(AC_GAME_ANIMATION);
+    requestAnimationFrame(AC_GAME_ANIMATION); // 递归掉用
 }
 
-requestAnimationFrame(AC_GAME_ANIMATION);
+requestAnimationFrame(AC_GAME_ANIMATION); // 调用一次即可实现循环
