@@ -40,17 +40,51 @@ class AcGamePlayground {
     update() {
     }
 
-    show() { // 打开playground界面
+    show(mode) { // 打开playground界面
+        let outer = this;
         this.$playground.show();
         this.root.$ac_game.append(this.$playground);
         this.resize(); // 获取16：9的width和height
         this.game_map = new GameMap(this);
         this.players = [];
-        this.players.push(new Player(this, this.width / 2 / this.scale, this.height / 2 / this.scale, this.height * 0.05 / this.scale, "white", this.height * 0.15 / this.scale, true));
+        this.players.push(new Player(
+            this,
+            this.width / 2 / this.scale,
+            this.height / 2 / this.scale,
+            this.height * 0.05 / this.scale,
+            "white",
+            this.height * 0.15 / this.scale,
+            "me",
+            this.root.settings.username,
+            this.root.settings.photo,
+        ));
 
-        for(let i = 0; i < 5; i ++)
+        if(mode === "single mode")
         {
-            this.players.push(new Player(this, this.width / 2 / this.scale, this.height / 2 / this.scale, this.height * 0.05 / this.scale, this.get_random_color(), this.height * 0.15 / this.scale, false));
+            for(let i = 0; i < 5; i ++)
+            {
+                this.players.push(new Player(
+                    this,
+                    this.width / 2 / this.scale,
+                    this.height / 2 / this.scale,
+                    this.height * 0.05 / this.scale,
+                    this.get_random_color(),
+                    this.height * 0.15 / this.scale,
+                    "robot",
+                ));
+            }
+        }
+        else if(mode === "multi mode")
+        {
+            // console.log("new multiplayersocket");
+            this.mps = new MultiPlayerSocket(this); // 建立连接
+            this.mps.uuid = this.players[0].uuid;
+
+            // 建立连接成功后发送创建玩家的请求
+            this.mps.ws.onopen = function() { // 连接成功时会回调该函数 YourSocket.ws.onopen()
+                outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
+            };
+
         }
 
     }

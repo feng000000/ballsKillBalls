@@ -10,6 +10,21 @@ class AcGameObject
         this.timedelta = 0; // 当前帧距离上一帧的时间间隔, 单位为ms
         // 因为不同浏览器刷新率可能不一样, 
         // 所以这里记录时间间隔来设置速度, 让所有浏览器下物体速度都一致
+
+        this.uuid = this.create_uuid();
+
+    }
+
+    create_uuid()
+    {
+        let res = "";
+        for(let i = 0; i < 8; i ++)
+        {
+            let x = Math.floor(Math.random() * 10);
+            res += x;
+        }
+
+        return res;
     }
 
     start() // 只会在第一帧执行

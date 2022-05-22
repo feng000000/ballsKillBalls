@@ -1,12 +1,13 @@
 class Player extends AcGameObject
 {
-    constructor(playground, x, y, radius, color, speed, is_me)
+    constructor(playground, x, y, radius, color, speed, character, username, photo)
     {
         // playground 地图
         // x, y 坐标
         // radius 球的半径 color 球的颜色
         // speed 每秒钟移动百分之多少 (在不同分辨率下时速度看起来一致, 所以用百分比速度)
-        // is_me 判断是不是自己
+        // character 判断角色
+
 
         super();
         this.playground = playground;
@@ -22,28 +23,30 @@ class Player extends AcGameObject
         this.radius = radius;
         this.color = color;
         this.speed = speed;
-        this.is_me = is_me;
+        this.character = character;
+        this.username = username;
+        this.photo = photo;
         this.eps = 0.01; //因为涉及浮点运算, 所以规定一个极小值
         this.friction = 0.9;
         this.spent_time = 0; // 从开始到此刻经过的时间
 
         this.cur_skill = null; // 当前选择的技能是什么
 
-        if(this.is_me)
+        if(this.character !== "robot") // 除了机器人外都有头像
         {
             this.img = new Image();
-            this.img.src = this.playground.root.settings.photo;
+            this.img.src = this.photo;
         }
 
     }
 
     start()
     {
-        if(this.is_me)
+        if(this.character === "me")
         {
             this.add_listening_events();
         }
-        else
+        else if(this.character === "robot")
         {
             let tx = Math.random() * this.playground.width / this.playground.scale;
             let ty = Math.random() * this.playground.height / this.playground.scale;
@@ -167,7 +170,7 @@ class Player extends AcGameObject
     {
         this.spent_time += this.timedelta / 1000;
         let players = this.playground.players;
-        if(!this.is_me && this.spent_time > 5 && Math.random() < 1 / 360.0)
+        if(this.character === "robot" && this.spent_time > 5 && Math.random() < 1 / 360.0)
         {
             let player = this.playground.players[Math.floor(Math.random() * players.length)];
             this.shoot_fireball(player.x, player.y);
@@ -187,7 +190,7 @@ class Player extends AcGameObject
             {
                 this.move_length = 0;
                 this.vx = this.vy = 0;
-                if(!this.is_me)
+                if(this.character === "robot")
                 {
                     let tx = Math.random() * this.playground.width / this.playground.scale;
                     let ty = Math.random() * this.playground.height / this.playground.scale;
@@ -207,7 +210,7 @@ class Player extends AcGameObject
     render()
     {
         let scale = this.playground.scale;
-        if(this.is_me)
+        if(this.character !== "robot") // 除了机器人外渲染头像
         {
             // 画头像
             this.ctx.save();
