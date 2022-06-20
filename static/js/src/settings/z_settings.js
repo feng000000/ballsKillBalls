@@ -165,7 +165,7 @@ class Settings
     add_listening_login()
     {
         let outer = this;
-        
+
         this.$login_register.click(function() {
             outer.register();
         });
@@ -174,7 +174,7 @@ class Settings
         })
     }
 
-    
+
     add_listening_register()
     {
         let outer = this;
@@ -193,7 +193,7 @@ class Settings
         let username = this.$login_username.val();
         let password = this.$login_password.val();
         this.$login_error_message.empty();
-        
+
         $.ajax({
             url: "https://app1793.acapp.acwing.com.cn/settings/login/",
             type: "GET",
@@ -213,18 +213,22 @@ class Settings
 
     logout_on_remote()
     {
-        if(this.platform === "ACAPP") return false;
-        
-        $.ajax({
-            url: "https://app1793.acapp.acwing.com.cn/settings/logout/",
-            type: "GET",
-            success: function(resp) {
-                console.log(resp);
-                if(resp.result === "success")
-                location.reload(resp.apply_code_url); // 页面重定向
-            }
-        });
-
+        if(this.platform === "ACAPP")
+        {
+            this.root.AcWingOS.api.window.close(); // acwing提供的api
+        }
+        else
+        {
+            $.ajax({
+                url: "https://app1793.acapp.acwing.com.cn/settings/logout/",
+                type: "GET",
+                success: function(resp) {
+                    console.log(resp);
+                    if(resp.result === "success")
+                        location.reload(resp.apply_code_url); // 页面重定向
+                }
+            });
+        }
     }
 
     register_on_remote()
@@ -272,7 +276,6 @@ class Settings
         let outer = this;
 
         this.root.AcWingOS.api.oauth2.authorize(appid, redirect_uri, scope, state, function(resp) {
-            console.log(resp);
             if(resp.result === "success")
             {
                 outer.username = resp.username;

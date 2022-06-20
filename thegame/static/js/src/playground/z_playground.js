@@ -59,6 +59,11 @@ class AcGamePlayground {
             this.root.settings.photo,
         ));
 
+        this.mode = mode;
+        this.state = "wating"; // wating 匹配中, fighting 游戏中, over 死亡
+        this.notice_board = new NoticeBoard(this);
+        this.player_count = 0;
+
         if(mode === "single mode")
         {
             for(let i = 0; i < 5; i ++)
@@ -79,6 +84,7 @@ class AcGamePlayground {
             // console.log("new multiplayersocket");
             this.mps = new MultiPlayerSocket(this); // 建立连接
             this.mps.uuid = this.players[0].uuid;
+
 
             // 建立连接成功后发送创建玩家的请求
             this.mps.ws.onopen = function() { // 连接成功时会回调该函数 YourSocket.ws.onopen()

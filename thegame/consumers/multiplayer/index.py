@@ -6,7 +6,15 @@ from django.core.cache import cache
 class MultiPlayer(AsyncWebsocketConsumer):
     async def connect(self): # 请求连接时的函数
         print('connect')
+        await self.accept()
 
+    async def disconnect(self, close_code): # 断开连接函数, 但不是100%执行(如用户直接关机), 所以用于判断用户在线离线人数不太靠谱。
+        print('disconnect')
+        await self.channel_layer.group_discard(self.room_name, self.channel_name)
+
+
+
+    async def create_player(self, data): # 创建玩家
         # self.room_name 表示当前连接的房间号
         self.room_name = None;
 
@@ -22,8 +30,6 @@ class MultiPlayer(AsyncWebsocketConsumer):
         if not self.room_name:
             return
 
-        # 连接函数, 房间创好了就建立连接
-        await self.accept()
 
         if not cache.has_key(self.room_name): # 如果房间还没建立, 建立一个房间
             cache.set(self.room_name, [], 3600) # 建立房间, 值为一个列表, 放player, 有效期1小时
@@ -45,14 +51,6 @@ class MultiPlayer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_name, self.channel_name)
 
 
-
-    async def disconnect(self, close_code): # 断开连接函数, 但不是100%执行(如用户直接关机), 所以用于判断用户在线离线人数不太靠谱。
-        print('disconnect')
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
-
-
-
-    async def create_player(self, data): # 创建玩家
         players = cache.get(self.room_name)
         players.append({
             'uuid': data['uuid'],
@@ -66,7 +64,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_name, # 和哪个房间通信
             {
-                'type': "group_create_player", # 发送到函数名为 "group_create_player" 的函数
+                'type': "group_send_event", # 发送到函数名为 "group_send_event" 的函数
                 'event': "create_player",
                 'uuid': data['uuid'],
                 'username': data['username'],
@@ -76,9 +74,73 @@ class MultiPlayer(AsyncWebsocketConsumer):
         )
 
 
-    async def group_create_player(self, data): # 接收到创建玩家的请求之后, 服务器向本地发送信息
+    async def group_send_event(self, data): # 接收到创建玩家的请求之后, 服务器向本地发送信息
         await self.send(text_data=json.dumps(data))
 
+
+
+    async def move_to(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event' : "move_to",
+                'uuid': data['uuid'],
+                'tx': data['tx'],
+                'ty': data['ty'],
+            }
+        )
+
+    async def shoot_fireball(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "shoot_fireball",
+                'uuid': data['uuid'],
+                'tx': data['tx'],
+                'ty': data['ty'],
+                'fireball_uuid': data['fireball_uuid'],
+            }
+        )
+
+    async def stop_move(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "stop_move",
+                'uuid': data['uuid'],
+            }
+        )
+
+    async def attack(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "attack",
+                'uuid': data['uuid'],
+                'attacked_uuid': data['attacked_uuid'],
+                'x': data['x'],
+                'y': data['y'],
+                'angle': data['angle'],
+                'damage': data['damage'],
+                'ball_uuid': data['ball_uuid'],
+            }
+        )
+
+    async def flash(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "flash",
+                'uuid': data['uuid'],
+                'tx': data['tx'],
+                'ty': data['ty'],
+            }
+        )
 
 
     async def receive(self, text_data): # receive接受前端到后端的信息
@@ -86,3 +148,13 @@ class MultiPlayer(AsyncWebsocketConsumer):
         event = data['event']
         if event == "create_player":
             await self.create_player(data)
+        elif event == "move_to":
+            await self.move_to(data)
+        elif event == "shoot_fireball":
+            await self.shoot_fireball(data)
+        elif event == "stop_move":
+            await self.stop_move(data)
+        elif event == "attack":
+            await self.attack(data)
+        elif event == "flash":
+            await self.flash(data)
