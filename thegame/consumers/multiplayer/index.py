@@ -18,6 +18,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
         # self.room_name 表示当前连接的房间号
         self.room_name = None;
 
+
         # 找有位置的房间, 暂定最大100个房间
         for i in range(100):
             name = "room-%d" % i;
@@ -142,6 +143,18 @@ class MultiPlayer(AsyncWebsocketConsumer):
             }
         )
 
+    async def message(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "message",
+                'uuid': data['uuid'],
+                'username': data['username'],
+                'text': data['text'],
+            }
+        )
+
 
     async def receive(self, text_data): # receive接受前端到后端的信息
         data = json.loads(text_data)
@@ -158,3 +171,5 @@ class MultiPlayer(AsyncWebsocketConsumer):
             await self.attack(data)
         elif event == "flash":
             await self.flash(data)
+        elif event == "message":
+            await self.message(data)

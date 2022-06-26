@@ -129,8 +129,18 @@ class Player extends AcGameObject
             }
         );
 
-        $(window).keydown( // 得到键盘按键
+        this.playground.game_map.$canvas.keydown( // 得到键盘按键
             function(e) {
+                if(e.which === 13) // enter
+                {
+                    outer.playground.talk_window.show_input();
+                }
+
+                if(e.which === 27) // esc
+                {
+                    outer.playground.talk_window.hide_input();
+                }
+
                 if(outer.playground.state != "fighting")
                     return true;
 

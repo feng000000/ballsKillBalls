@@ -62,6 +62,7 @@ class AcGamePlayground {
         this.mode = mode;
         this.state = "wating"; // wating 匹配中, fighting 游戏中, over 死亡
         this.notice_board = new NoticeBoard(this);
+        this.talk_window = new TalkWindow(this);
         this.player_count = 0;
 
         if(mode === "single mode")
