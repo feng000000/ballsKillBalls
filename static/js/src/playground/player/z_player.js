@@ -139,6 +139,7 @@ class Player extends AcGameObject
                 if(e.which === 27) // esc
                 {
                     outer.playground.talk_window.hide_input();
+                    outer.playground.talk_window.hide_history();
                 }
 
                 if(outer.playground.state != "fighting")

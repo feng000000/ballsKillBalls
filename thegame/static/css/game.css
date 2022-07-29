@@ -170,7 +170,7 @@
 .ac-game-talk-window-history {
     position: absolute;
     top: 66%;
-    left: 20%;
+    left: 25%;
 
     transform: translate(-50%, -50%);
 
@@ -191,7 +191,7 @@
 .ac-game-talk-window-input {
     position: absolute;
     top: 86%;
-    left: 20%;
+    left: 25%;
 
     transform: translate(-50%, -50%);
 

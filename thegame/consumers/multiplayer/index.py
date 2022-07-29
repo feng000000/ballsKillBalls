@@ -3,79 +3,63 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 
+from thrift import Thrift
+from thrift.transport import TSocket
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+
+from match_system.src.match_server.match_service import Match
+from thegame.models.player.player import Player
+from channels.db import database_sync_to_async
+
 class MultiPlayer(AsyncWebsocketConsumer):
     async def connect(self): # 请求连接时的函数
-        print('connect')
         await self.accept()
 
     async def disconnect(self, close_code): # 断开连接函数, 但不是100%执行(如用户直接关机), 所以用于判断用户在线离线人数不太靠谱。
-        print('disconnect')
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
-
-
+        if self.room_name: # 退出时, 如果在某一个房间里, 则将channel_name从group里删除(channel理解为该用户创建的通道?)
+            await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def create_player(self, data): # 创建玩家
-        # self.room_name 表示当前连接的房间号
-        self.room_name = None;
+        self.room_name = None
+        self.uuid = data["uuid"]
+
+        # Make socket
+        transport = TSocket.TSocket('127.0.0.1', 9090)
+
+        # Buffering is critical. Raw sockets are very slow
+        transport = TTransport.TBufferedTransport(transport)
+
+        # Wrap in a protocol
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+
+        # Create a client to use the protocol encoder
+        client = Match.Client(protocol)
+
+        def db_get_player():
+            return Player.objects.get(user__username=data["username"])
+
+        player = await database_sync_to_async(db_get_player)()
 
 
-        # 找有位置的房间, 暂定最大100个房间
-        for i in range(100):
-            name = "room-%d" % i;
-            if not cache.has_key(name) or len(cache.get(name)) < settings.ROOM_CAPACITY:
-                # 房间还没开或者开了但是人数没到settings里设置的人数上限
-                self.room_name = name;
-                break;
+        # Connect!
+        transport.open()
 
-        # 房间不够, 没有找到房间
-        if not self.room_name:
-            return
+        client.add_player(player.score, self.uuid, data["username"], data["photo"], self.channel_name)
 
-
-        if not cache.has_key(self.room_name): # 如果房间还没建立, 建立一个房间
-            cache.set(self.room_name, [], 3600) # 建立房间, 值为一个列表, 放player, 有效期1小时
-
-        # 服务器向本地发送已有玩家信息
-        for player in cache.get(self.room_name):
-            await self.send(text_data=json.dumps({
-                'event': "create_player",
-                'uuid': player['uuid'],
-                'username': player['username'],
-                'photo': player['photo'],
-                'roomname': self.room_name,
-                }))
-
-        # 真正把玩家加入到 ‘房间’ 里
-        # django中有group的概念, 匹配到的玩家放在一个group里面
-        # channels_layer.group_add() 将当前链接加到这个组里
-        # 组内有向所有成员群发消息这样的功能(group_send)
-        await self.channel_layer.group_add(self.room_name, self.channel_name)
-
-
-        players = cache.get(self.room_name)
-        players.append({
-            'uuid': data['uuid'],
-            'username': data['username'],
-            'photo': data['photo'],
-        })
-        cache.set(self.room_name, players, 3600)
-
-        # 创建完玩家之后, 要通知房间内的其他玩家都创建这个玩家
-        # group中的玩家之间通信, 发送内容到 函数名为 type的函数
-        await self.channel_layer.group_send(
-            self.room_name, # 和哪个房间通信
-            {
-                'type': "group_send_event", # 发送到函数名为 "group_send_event" 的函数
-                'event': "create_player",
-                'uuid': data['uuid'],
-                'username': data['username'],
-                'photo': data['photo'],
-                'roomname': self.room_name,
-            }
-        )
+        # Close!
+        transport.close()
 
 
     async def group_send_event(self, data): # 接收到创建玩家的请求之后, 服务器向本地发送信息
+        if not self.room_name:
+            # 因为房间号中保存了三个人的uuid, 所以这里用正则匹配cache中含有 self.uuid的房间
+            # keys返回一个包含结果的数组
+            keys = cache.keys('*%s*' % (self.uuid))
+
+            if keys:
+                self.room_name = keys[0]
+
         await self.send(text_data=json.dumps(data))
 
 

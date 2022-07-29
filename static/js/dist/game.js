@@ -410,6 +410,7 @@ class Player extends AcGameObject
                 if(e.which === 27) // esc
                 {
                     outer.playground.talk_window.hide_input();
+                    outer.playground.talk_window.hide_history();
                 }
 
                 if(outer.playground.state != "fighting")
@@ -1094,15 +1095,19 @@ class TalkWindow
     {
         let outer = this;
 
+        this.$talk_history.on("contextmenu",function() {
+            return false;
+        });
+
         this.$input.keydown(function(e) {
-            if(e.which === 27) // esc
-            {
-                // 退出输入框时, 三秒后关闭历史记录, 并清除输入框
-                outer.hide_input();
-                outer.hide_history();
-                outer.$input.val("");
-                return false;
-            }
+            //if(e.which === 27) // esc
+            //{
+            //    // 退出输入框时, 三秒后关闭历史记录, 并清除输入框
+            //    outer.hide_input();
+            //    outer.hide_history();
+            //    outer.$input.val("");
+            //    return false;
+            //}
 
             if(e.which === 13) // enter
             {
@@ -1118,7 +1123,10 @@ class TalkWindow
                     {
                         outer.playground.mps.send_message(username, text);
                     }
+
                 }
+
+                outer.hide_input();
                 return false;
             }
         });
@@ -1129,7 +1137,7 @@ class TalkWindow
         return $(`<div>${message}</div>`);
     }
 
-    add_message(username, text)
+    add_message(username, text) // 添加信息, 显示hitory, 3秒后关闭
     {
         let message = `[${username}]${text}`; // js语法, ``中可以取变量的值
 
@@ -1168,14 +1176,14 @@ class TalkWindow
         }, 3000);
     }
 
-    show_input()
+    show_input() // 显示输入框
     {
         this.show_history();
         this.$input.show();
         this.$input.focus();
     }
 
-    hide_input()
+    hide_input() // 隐藏输入框
     {
         this.$input.hide();
         this.playground.game_map.$canvas.focus();
