@@ -286,7 +286,18 @@ class Player extends AcGameObject
 
         this.update_move();
 
+        this.update_win();
+
         this.render();
+    }
+
+    update_win()
+    {
+        if(this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1)
+        {
+            this.playground.state = "over";
+            this.playground.score_board.win();
+        }
     }
 
     update_coldtime()
@@ -422,6 +433,7 @@ class Player extends AcGameObject
     {
         if(this.character === "me")
         {
+            this.playground.score_board.lose();
             this.playground.state = "over";
         }
 

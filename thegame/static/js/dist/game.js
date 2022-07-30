@@ -98,6 +98,11 @@ class AcGameObject
 
     }
 
+    late_update() // 在每一帧的最后执行
+    {
+
+    }
+
     on_destroy() // 在被销毁前执行一次
     {
 
@@ -136,6 +141,13 @@ let AC_GAME_ANIMATION = function(timestamp) // 实现动画
             obj.update(); // 更新画面
         }
     }
+
+    for(let i = 0; i < AC_GAME_OBJECTS.length; i ++)
+    {
+        let obj = AC_GAME_OBJECTS[i];
+        obj.late_update();
+    }
+
     last_timestamp = timestamp;
 
     requestAnimationFrame(AC_GAME_ANIMATION); // 递归掉用
@@ -557,7 +569,18 @@ class Player extends AcGameObject
 
         this.update_move();
 
+        this.update_win();
+
         this.render();
+    }
+
+    update_win()
+    {
+        if(this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1)
+        {
+            this.playground.state = "over";
+            this.playground.score_board.win();
+        }
     }
 
     update_coldtime()
@@ -693,6 +716,7 @@ class Player extends AcGameObject
     {
         if(this.character === "me")
         {
+            this.playground.score_board.lose();
             this.playground.state = "over";
         }
 
@@ -707,6 +731,73 @@ class Player extends AcGameObject
         }
     }
 
+}
+class ScoreBoard extends AcGameObject
+{
+    constructor(playground)
+    {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.game_map.ctx;
+
+        this.state = null; // win 胜利， lose 失败
+
+        this.win_img = new Image();
+        this.win_img.src = "https://cdn.acwing.com/media/article/image/2021/12/17/1_8f58341a5e-win.png";
+
+        this.lose_img = new Image();
+        this.lose_img.src = "https://cdn.acwing.com/media/article/image/2021/12/17/1_9254b5f95e-lose.png";
+    }
+
+    start()
+    {
+    }
+
+    add_listening()
+    {
+        let outer = this;
+        let $canvas = this.playground.game_map.$canvas;
+
+        $canvas.on('click', function() {
+            outer.playground.hide();
+            outer.playground.root.menu.show();
+        });
+    }
+
+    win()
+    {
+        this.state = "win";
+
+        let outer = this;
+        setTimeout(function() {
+            outer.add_listening();
+        }, 1000);
+    }
+
+    lose()
+    {
+        this.state = "lose";
+
+        let outer = this;
+        setTimeout(function() {
+            outer.add_listening();
+        }, 1000);
+    }
+
+    late_update()
+    {
+        this.render();
+    }
+
+    render()
+    {
+        let len = this.playground.height / 2;
+
+        if(this.state === "win")
+            this.ctx.drawImage(this.win_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
+        else if(this.state === "lose")
+            this.ctx.drawImage(this.lose_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
+    }
 }
 class FireBall extends AcGameObject
 {
@@ -1205,15 +1296,34 @@ class AcGamePlayground {
         return colors[Math.floor(Math.random() * 5)];
     }
 
+    create_uuid()
+    {
+        let res = "";
+        for(let i = 0; i < 8; i ++)
+        {
+            let x = parseInt(Math.floor(Math.random() * 10));
+            res += x;
+        }
+        return res;
+    }
+
     start() 
     {
         let outer = this;
+        let uuid = this.create_uuid();
+        this.resize(); // 刚生成页面时调用一次
 
-        outer.resize(); // 刚生成页面时调用一次
-
-        $(window).resize(function() { // 之后每次窗口改变大小时调用一次
+        $(window).on(`resize.${uuid}`, function() { // 之后每次窗口改变大小时调用一次
+            //console.log("resize");
             outer.resize();
         });
+
+        if(this.root.AcWingOS)
+        {
+            this.root.AcWingOS.api.window.on_close(function() { // acwing提供的api
+                $(window).off(`resize.${uuid}`);
+            });
+        }
     }
 
     resize()
@@ -1237,6 +1347,7 @@ class AcGamePlayground {
         this.root.$ac_game.append(this.$playground);
         this.resize(); // 获取16：9的width和height
         this.game_map = new GameMap(this);
+        this.score_board = new ScoreBoard(this);
         this.players = [];
         this.players.push(new Player(
             this,
@@ -1288,6 +1399,39 @@ class AcGamePlayground {
     }
 
     hide() { // 关闭playground界面
+
+        // 隐藏玩家
+        // 因为刚开始创建playground时就调用了hide()函数, 所以只有在玩家存在时才会是游戏结束的情况, 此时再隐藏所有东西
+        while(this.players && this.players.length > 0)
+        {
+            this.players[0].destroy();
+        }
+
+        // 隐藏游戏地图
+        if(this.game_map)
+        {
+            this.game_map.destroy();
+            this.game_map = null;
+        }
+
+        // 删除notice_board
+        if(this.notice_board)
+        {
+            this.notice_board.destroy();
+            this.notice_board = null;
+        }
+
+        // 删除score_board
+        if(this.score_board)
+        {
+            this.score_board.destroy();
+            this.score_board = null;
+        }
+
+        // 清空html
+        this.$playground.empty();
+
+
         this.$playground.hide();
     }
 }

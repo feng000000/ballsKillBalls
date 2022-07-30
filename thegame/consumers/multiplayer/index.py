@@ -56,6 +56,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
             # 因为房间号中保存了三个人的uuid, 所以这里用正则匹配cache中含有 self.uuid的房间
             # keys返回一个包含结果的数组
             keys = cache.keys('*%s*' % (self.uuid))
+            print(keys)
 
             if keys:
                 self.room_name = keys[0]
@@ -100,6 +101,38 @@ class MultiPlayer(AsyncWebsocketConsumer):
         )
 
     async def attack(self, data):
+        if not self.room_name:
+            return
+
+        players = cache.get(self.room_name)
+
+        if not players:
+             return
+
+        for player in players:
+            if player['uuid'] == data['attacked_uuid']:
+                player['hp'] -= 25
+
+        remain_cnt = 0
+        for player in players:
+            if player['hp'] > 0:
+                remain_cnt += 1
+
+        if remain_cnt > 1:
+            if self.room_name:
+                cache.set(self.room_name, players, 3600)
+        else:
+            def db_update_player_score(username, score):
+                player = Player.objects.get(user__username=username)
+                player.score += score
+                player.save()
+
+            for player in players:
+                if player['hp'] <= 0:
+                    await database_sync_to_async(db_update_player_score)(player['username'], -5)
+                else:
+                    await database_sync_to_async(db_update_player_score)(player['username'], 10)
+
         await self.channel_layer.group_send(
             self.room_name,
             {

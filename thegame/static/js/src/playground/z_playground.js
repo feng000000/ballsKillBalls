@@ -14,15 +14,34 @@ class AcGamePlayground {
         return colors[Math.floor(Math.random() * 5)];
     }
 
+    create_uuid()
+    {
+        let res = "";
+        for(let i = 0; i < 8; i ++)
+        {
+            let x = parseInt(Math.floor(Math.random() * 10));
+            res += x;
+        }
+        return res;
+    }
+
     start() 
     {
         let outer = this;
+        let uuid = this.create_uuid();
+        this.resize(); // 刚生成页面时调用一次
 
-        outer.resize(); // 刚生成页面时调用一次
-
-        $(window).resize(function() { // 之后每次窗口改变大小时调用一次
+        $(window).on(`resize.${uuid}`, function() { // 之后每次窗口改变大小时调用一次
+            //console.log("resize");
             outer.resize();
         });
+
+        if(this.root.AcWingOS)
+        {
+            this.root.AcWingOS.api.window.on_close(function() { // acwing提供的api
+                $(window).off(`resize.${uuid}`);
+            });
+        }
     }
 
     resize()
@@ -46,6 +65,7 @@ class AcGamePlayground {
         this.root.$ac_game.append(this.$playground);
         this.resize(); // 获取16：9的width和height
         this.game_map = new GameMap(this);
+        this.score_board = new ScoreBoard(this);
         this.players = [];
         this.players.push(new Player(
             this,
@@ -97,6 +117,39 @@ class AcGamePlayground {
     }
 
     hide() { // 关闭playground界面
+
+        // 隐藏玩家
+        // 因为刚开始创建playground时就调用了hide()函数, 所以只有在玩家存在时才会是游戏结束的情况, 此时再隐藏所有东西
+        while(this.players && this.players.length > 0)
+        {
+            this.players[0].destroy();
+        }
+
+        // 隐藏游戏地图
+        if(this.game_map)
+        {
+            this.game_map.destroy();
+            this.game_map = null;
+        }
+
+        // 删除notice_board
+        if(this.notice_board)
+        {
+            this.notice_board.destroy();
+            this.notice_board = null;
+        }
+
+        // 删除score_board
+        if(this.score_board)
+        {
+            this.score_board.destroy();
+            this.score_board = null;
+        }
+
+        // 清空html
+        this.$playground.empty();
+
+
         this.$playground.hide();
     }
 }
